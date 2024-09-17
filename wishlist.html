@@ -28,11 +28,10 @@
 <body>
    
    <script>
-      // Check if user is logged in
       window.onload = function() {
           const isLoggedIn = sessionStorage.getItem('loggedIn');
           if (isLoggedIn !== 'true') {
-              window.location.href = 'login.html'; // Redirect to login if not logged in
+              window.location.href = 'login.html'; 
           }
       }
   </script>

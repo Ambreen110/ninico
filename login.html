@@ -61,24 +61,21 @@
     const validUsername = 'admin';
     const validPassword = '123456';
 
-    // Check if the user is logged in
     function checkLoginStatus() {
         const isLoggedIn = sessionStorage.getItem('loggedIn');
         if (isLoggedIn !== 'true') {
-            window.location.href = 'login.html'; // Redirect to login if not logged in
+            window.location.href = 'login.html'; 
         }
     }
 
-    // Validate login credentials
     function validateLogin() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
         const errorMessage = document.getElementById('error-message');
 
         if (username === validUsername && password === validPassword) {
-            // Set login status in session storage
             sessionStorage.setItem('loggedIn', 'true');
-            window.location.href = 'index.html'; // Redirect to homepage
+            window.location.href = 'index.html'; 
         } else {
             errorMessage.textContent = 'Invalid username or password';
         }
