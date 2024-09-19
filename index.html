@@ -51,14 +51,61 @@
    <body>
       
       <script>
+         // Ensure login check happens first
          window.onload = function() {
-             const isLoggedIn = localStorage.getItem('loggedIn');
-             if (isLoggedIn !== 'true') {
-                 sessionStorage.clear();
-                 window.location.href = 'login.html';
+           const isLoggedIn = sessionStorage.getItem('loggedIn');
+           if (isLoggedIn !== 'true') {
+             window.location.href = 'login.html'; // Redirect to login page if not logged in
+             return; // Stop any further code from running if not logged in
+           }
+           // If logged in, proceed to load the content
+           loadProducts();
+         };
+       </script>
+       
+       <!-- Your product listing script -->
+       <script>
+         document.addEventListener('DOMContentLoaded', function() {
+           const itemsPerPage = 10;
+           let currentPage = 1;
+           let products = [];
+           const cart = {};
+       
+           // Fetch and load products
+           function loadProducts() {
+             products = JSON.parse(localStorage.getItem('products')) || [];
+       
+             if (products.length === 0) {
+               fetch('Inventory-4-Aug-2024.json')
+                 .then(response => response.json())
+                 .then(data => {
+                   products = data;
+                   assignPrices();
+                   localStorage.setItem('products', JSON.stringify(products));
+                   renderProducts(currentPage);
+                   renderPagination();
+                 })
+                 .catch(error => console.error('Error loading the product data:', error));
+             } else {
+               if (!products.every(product => product.price !== undefined)) {
+                 assignPrices();
+                 localStorage.setItem('products', JSON.stringify(products));
+               }
+               renderProducts(currentPage);
+               renderPagination();
              }
-         }
-     </script>
+           }
+       
+           // Other functions for rendering products, pagination, cart, etc.
+           // ...
+       
+           // Ensure loadProducts is only called after the DOM is ready and login check is done
+           if (sessionStorage.getItem('loggedIn') === 'true') {
+             loadProducts();
+           }
+         });
+       </script>
+       
      
      
       <!-- preloader -->
@@ -789,8 +836,9 @@
          }
      
          // Load products when page is ready
-         window.onload = loadProducts;
-     </script>
+         if (sessionStorage.getItem('loggedIn') === 'true') {
+      loadProducts();
+    }     </script>
      
      
      
