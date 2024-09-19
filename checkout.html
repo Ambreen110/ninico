@@ -583,7 +583,7 @@
       <!-- checkout-area start -->
       <section class="checkout-area pb-50 wow fadeInUp" data-wow-duration=".8s" data-wow-delay=".2s">
          <div class="container">
-            <form action="#">
+            <form id="invoice-form">
                <div class="row">
                      <div class="col-lg-6 col-md-12">
                         <div class="checkbox-form">
@@ -592,7 +592,7 @@
                                  <div class="col-md-12">
                                     <div class="country-select">
                                        <label>Country <span class="required">*</span></label>
-                                       <select>
+                                       <select id="country">
                                              <option value="volvo">United States</option>
                                              <option value="saab">Algeria</option>
                                              <option value="mercedes">Canada</option>
@@ -606,25 +606,25 @@
                                  <div class="col-md-6">
                                     <div class="checkout-form-list">
                                        <label>First Name <span class="required">*</span></label>
-                                       <input type="text" placeholder="" />
+                                       <input type="text" placeholder="" id="first-name"/>
                                     </div>
                                  </div>
                                  <div class="col-md-6">
                                     <div class="checkout-form-list">
                                        <label>Last Name <span class="required">*</span></label>
-                                       <input type="text" placeholder="" />
+                                       <input type="text" id="last-name" placeholder="" />
                                     </div>
                                  </div>
                                  <div class="col-md-12">
                                     <div class="checkout-form-list">
                                        <label>Company Name</label>
-                                       <input type="text" placeholder="" />
+                                       <input type="text" id="company-name" placeholder="" />
                                     </div>
                                  </div>
                                  <div class="col-md-12">
                                     <div class="checkout-form-list">
                                        <label>Address <span class="required">*</span></label>
-                                       <input type="text" placeholder="Street address" />
+                                       <input type="text" id="address"  placeholder="Street address" />
                                     </div>
                                  </div>
                                  <div class="col-md-12">
@@ -635,31 +635,31 @@
                                  <div class="col-md-12">
                                     <div class="checkout-form-list">
                                        <label>Town / City <span class="required">*</span></label>
-                                       <input type="text" placeholder="Town / City" />
+                                       <input type="text" id="city"  placeholder="Town / City" />
                                     </div>
                                  </div>
                                  <div class="col-md-6">
                                     <div class="checkout-form-list">
                                        <label>State / County <span class="required">*</span></label>
-                                       <input type="text" placeholder="" />
+                                       <input type="text" id="state"  placeholder="" />
                                     </div>
                                  </div>
                                  <div class="col-md-6">
                                     <div class="checkout-form-list">
                                        <label>Postcode / Zip <span class="required">*</span></label>
-                                       <input type="text" placeholder="Postcode / Zip" />
+                                       <input type="text"  id="postcode" placeholder="Postcode / Zip" />
                                     </div>
                                  </div>
                                  <div class="col-md-6">
                                     <div class="checkout-form-list">
                                        <label>Email Address <span class="required">*</span></label>
-                                       <input type="email" placeholder="" />
+                                       <input type="email" id="email"  placeholder="" />
                                     </div>
                                  </div>
                                  <div class="col-md-6">
                                     <div class="checkout-form-list">
                                        <label>Phone <span class="required">*</span></label>
-                                       <input type="text" placeholder="Postcode / Zip" />
+                                       <input type="text"  id="phone"   placeholder="Postcode / Zip" />
                                     </div>
                                  </div>
                                  <div class="col-md-12">
@@ -818,7 +818,9 @@
                                     <!-- Payment methods here -->
                                 </div>
                                 <div class="order-button-payment mt-20">
-                                    <button type="submit" class="tp-btn tp-color-btn w-100 banner-animation">Place order</button>
+                                 <button type="submit" onclick="generateInvoice()" class="tp-btn tp-color-btn w-100 banner-animation">Place order</button>
+                                 <button class="btn btn-primary" onclick="generateInvoice()">Generate Invoice</button>
+
                                 </div>
                             </div>
                         </div>
@@ -830,10 +832,236 @@
       </section>
       <!-- checkout-area end -->
       <script>
-         document.addEventListener('DOMContentLoaded', function() {
+
+async function getAuthToken() {
+    try {
+        const response = await fetch(`https://decobackend.webparktech.net/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: 'admin@example.com',
+                password: 'Admin@123'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to authenticate');
+        }
+
+        const data = await response.json();
+        return data.token; // Assuming the token is in `data.token`
+    } catch (error) {
+        console.error('Error getting auth token:', error);
+        throw error; // Re-throw the error to be caught in form submission
+    }
+}
+
+document.getElementById('invoice-form').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Prevent the default form submission
+const formData = new FormData(document.getElementById('invoice-form'));
+
+    
+    try {
+        const token = await getAuthToken(); // Get the JWT token
+        
+        // Log token and formData for debugging
+        console.log('Token:', token);
+        console.log('Form Data:', Object.fromEntries(formData.entries()));
+
+        // Correct the fetch URL to the `/invoice` route
+        const response = await fetch(`https://decobackend.webparktech.net/invoice`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${token}`
+                // FormData automatically sets Content-Type header
+            }
+        });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+            console.log('Invoice submitted successfully:', result);
+        } else {
+            console.error('Error submitting invoice:', result);
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+    }
+});
+
+// Define uploadInvoice function
+async function uploadInvoice(file) {
+    const formData = new FormData();
+    formData.append("invoicePdf", file);
+
+    try {
+        const response = await axios.post('https://decobackend.webparktech.net/uploads', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                // Add authentication headers if needed
+            },
+        });
+
+        console.log('File uploaded successfully:', response.data);
+        // Handle success (e.g., show a confirmation message)
+    } catch (error) {
+        console.error('Error uploading file:', error);
+    }
+}
+
+// Define generateInvoice function
+async function generateInvoice() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Fetch user information from form fields
+    const firstName = document.getElementById('first-name').value;
+    const lastName = document.getElementById('last-name').value;
+    const address = document.getElementById('address').value;
+    const city = document.getElementById('city').value;
+    const state = document.getElementById('state').value;
+    const postcode = document.getElementById('postcode').value;
+    const country = document.getElementById('country').value;
+    const email = document.getElementById('email').value;
+
+    // Generate today's date and due date
+    const issueDate = new Date().toISOString().split('T')[0];
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30); // Due in 30 days
+    const formattedDueDate = dueDate.toISOString().split('T')[0];
+
+    const invoiceNumber = '000002';  // Example invoice number
+
+    // Fetch cart and products from localStorage
+    const cart = JSON.parse(localStorage.getItem('cart')) || {};
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+
+    let yOffset = 20; // Initial Y offset for content
+    let subtotal = 0;
+
+    // --- HEADER ---
+    doc.setFillColor(230, 230, 250); // Light lavender color
+    doc.rect(10, yOffset, 190, 20, 'F');  // Filled rectangle
+    yOffset += 10;
+
+    doc.setFontSize(22);
+    doc.setTextColor(48, 63, 159);  // Indigo color
+    doc.text("NINICO", 105, yOffset, null, null, 'center');
+    yOffset += 10;
+
+    doc.setFontSize(18);
+    doc.text("Invoice", 105, yOffset, null, null, 'center');
+    yOffset += 10;
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);  // Reset to black color
+    doc.text(`Issue Date: ${issueDate}`, 20, yOffset);
+    doc.text(`Due Date: ${formattedDueDate}`, 100, yOffset);
+    doc.text(`Invoice No: ${invoiceNumber}`, 160, yOffset);
+    yOffset += 15;
+
+    // --- USER DETAILS ---
+    doc.setFillColor(240, 240, 240); // Light gray color
+    doc.rect(10, yOffset, 190, 25, 'F');  // Filled rectangle
+
+    doc.setFontSize(12);
+    yOffset += 5;
+    doc.text("Invoice To:", 20, yOffset);
+    yOffset += 5;
+    doc.text(`Name: ${firstName} ${lastName}`, 20, yOffset);
+    doc.text(`Email: ${email}`, 100, yOffset);
+    yOffset += 5;
+    doc.text(`Address: ${address}, ${city}, ${state}, ${postcode}`, 20, yOffset);
+    yOffset += 5;
+    doc.text(`Country: ${country}`, 20, yOffset);
+    yOffset += 10;
+
+    // --- INVOICE TABLE ---
+    doc.setFillColor(173, 216, 230); // Light blue color for table headers
+    doc.rect(10, yOffset, 190, 10, 'F');  // Filled rectangle for headers
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    yOffset += 7;
+    doc.text("Product/Service", 20, yOffset);
+    doc.text("Quantity", 120, yOffset);
+    doc.text("Rate", 140, yOffset);
+    doc.text("Total", 170, yOffset);
+    yOffset += 5;
+
+    doc.line(20, yOffset, 190, yOffset);
+    yOffset += 5;
+
+    for (let sku in cart) {
+        const product = products.find(p => p['SKU ID'] === sku);
+        if (product) {
+            const quantity = cart[sku];
+            const price = product.price;
+            const total = quantity * price;
+            subtotal += total;
+
+            doc.setFillColor(245, 245, 245); // Light gray background for rows
+            doc.rect(10, yOffset, 190, 10, 'F');  // Filled rectangle for row
+
+            doc.setFontSize(12);
+            yOffset += 7;
+            doc.text(product['SKU Name'], 20, yOffset);
+            doc.text(String(quantity), 120, yOffset);
+            doc.text(`$${price.toFixed(2)}`, 140, yOffset);
+            doc.text(`$${total.toFixed(2)}`, 170, yOffset);
+            yOffset += 5;
+
+            doc.line(20, yOffset, 190, yOffset);
+            yOffset += 5;
+        }
+    }
+
+    const shippingCost = 7.00; // Example static shipping cost
+    const total = subtotal + shippingCost;
+
+    doc.setFillColor(230, 230, 250); // Light lavender color
+    doc.rect(10, yOffset, 190, 20, 'F');  // Filled rectangle for totals
+
+    yOffset += 10;
+    doc.setFontSize(12);
+    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 140, yOffset);
+
+    yOffset += 10;
+    doc.text(`Shipping: $${shippingCost.toFixed(2)}`, 140, yOffset);
+
+    yOffset += 10;
+    doc.setFontSize(14);
+    doc.text(`Total: $${total.toFixed(2)}`, 140, yOffset);
+
+    yOffset += 20;
+    doc.setFontSize(12);
+    doc.setTextColor(48, 63, 159);  // Indigo color for footer text
+    doc.text("Thank you for your business!", 105, yOffset, null, null, 'center');
+
+    // Create FormData and append the PDF Blob
+    const pdfBlob = doc.output('blob');
+    await uploadInvoice(pdfBlob); // Upload the PDF file
+
+    // Optionally, trigger download
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'invoice.pdf'; // Download filename
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url); // Clean up
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
              renderOrderSummary();
          });
      
+
+
          function renderOrderSummary() {
              const cart = JSON.parse(localStorage.getItem('cart')) || {};
              const products = JSON.parse(localStorage.getItem('products')) || [];
@@ -1069,5 +1297,8 @@
       <script src="assets/js/jquery-ui.js"></script>
       <script src="assets/js/meanmenu.js"></script>
       <script src="assets/js/main.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+
    </body>
 </html>
