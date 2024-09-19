@@ -52,12 +52,14 @@
       
       <script>
          window.onload = function() {
-             const isLoggedIn = sessionStorage.getItem('loggedIn');
+             const isLoggedIn = localStorage.getItem('loggedIn');
              if (isLoggedIn !== 'true') {
-                 window.location.href = 'login.html'; 
+                 sessionStorage.clear();
+                 window.location.href = 'login.html';
              }
          }
      </script>
+     
      
       <!-- preloader -->
       <div id="preloader">
